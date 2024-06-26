@@ -9,11 +9,22 @@
 #define BISHOP 0b00000100
 #define QUEEN  0b00000101
 #define KING   0b00000111
+#define MOVED  0b00001000
+
+#include <SFML/Graphics.hpp>
+#include <bitset> //For debug
+#include <iostream>
 
 class Board{
 private:
     char board[8][8];
+    sf::Texture& piecesTexture;
 public:
-    Board();
+    Board(sf::Texture&);
     void ResetBoard();
+    void RenderBoard(sf::RenderWindow&, float squareSize);
+    void RenderPieces(sf::RenderWindow &window, sf::Sprite* pieceSprites, float squareSize);
+    int CheckMove(int startX, int startY, int endX, int endY);
+    void MakeMove(int startX, int startY, int endX, int endY, float squareSize, sf::Sprite &pieceSprite, sf::Sprite &captureSprite);
+    void MakeMove(int startX, int startY, int endX, int endY, float squareSize, sf::Sprite &pieceSprite);
 };
