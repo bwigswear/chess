@@ -110,8 +110,10 @@ void printBinary(char c) {
 
 int Board::CheckMove(int startX, int startY, int endX, int endY)
 {
-    //printBinary(board[startX][startY]);
     if(endX < 0 || endX > 7 || endY < 0 || endY > 7) return 0;
+    if(startX == endX && startY == endY) return 0;
+    if((board[startX][startY] & board[endX][endY]) & 48) return 0;
+    int xStep, yStep;
     switch (board[startX][startY] & 7){
         case PAWN: //WILL NEED TO ADD EN PASSANT
             if(startX == endX)
@@ -147,23 +149,75 @@ int Board::CheckMove(int startX, int startY, int endX, int endY)
             return 0;
             break;
         case ROOK:
+            if(startX != endX && startY != endY) return 0;
+            
+            if(startX == endX)
+            {
+                if(startY > endY)
+                {
+                    for(int i = startY - 1; i > endY; i--)
+                    {
+                        if(board[startX][i] & 7) return 0;
+                    }
+                }
+                else
+                {
+                    for(int i = startY + 1; i < endY; i++)
+                    {
+                        if(board[startX][i] & 7) return 0;
+                    }
+                }
+                return board[endX][endY] & 7 ? 2 : 1;
+            }
+            if(startY == endY)
+            {
+                if(startX > endX)
+                {
+                    for(int i = startX - 1; i > endX; i--)
+                    {
+                        if(board[i][startY] & 7) return 0;
+                    }
+                }
+                else
+                {
+                    for(int i = startX + 1; i < endX; i++)
+                    {
+                        if(board[i][startY] & 7) return 0;
+                    }
+                }
+                return board[endX][endY] & 7 ? 2 : 1;
+            }
             return 0;
             break;
         case KNIGHT:
+            if(startX == endX || startY == endY) return 0;
+            if((abs(startY - endY) == 2 && abs(startX - endX) == 1) || (abs(startY - endY) == 1 && abs(startX - endX) == 2)) return board[endX][endY] & 7 ? 2 : 1;
             return 0;
             break;
         case BISHOP:
-            return 0;
+            if(abs(startX - endX) != abs(startY - endY)) return 0;
+            xStep = startX > endX ? -1 : 1;
+            yStep = startY > endY ? -1 : 1;
+            for(int i = startX + xStep, j = startY + yStep; i != endX && j != endY; i+=xStep, j+=yStep) if(board[i][j] & 7) return 0;
+            return board[endX][endY] & 7 ? 2 : 1;
             break;
         case QUEEN:
+
             return 0;
             break;
         case KING:
+            if(endX == 6 && endY == 7 && !(board[startX][startY] & MOVED) && (board[7][7] & ROOK) && !(board[7][7] & MOVED) 
+            && !(board[5][7] & 7) && !(board[6][7] & 7)) return 3;
+            if(endX == 6 && endY == 0 && !(board[startX][startY] & MOVED) && (board[7][0] & ROOK) && !(board[7][0] & MOVED)
+            && !(board[5][0] & 7) && !(board[6][0] & 7)) return 3;
+            //Implement check checking here
+            if(abs(startX - endX) > 1 || abs(startY - endY) > 1) return 0;
+            return board[endX][endY] & 7 ? 2 : 1;
             return 0;
             break;
 
     }
-    return 2;
+    return 0;
 }
 
 void Board::MakeMove(int startX, int startY, int endX, int endY, float squareSize, sf::Sprite &pieceSprite, sf::Sprite &captureSprite)
