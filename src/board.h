@@ -12,7 +12,6 @@
 #define MOVED  0b00001000
 
 #include <SFML/Graphics.hpp>
-#include <bitset> //For debug
 #include <iostream>
 
 class Board{

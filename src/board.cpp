@@ -1,8 +1,8 @@
 #include "board.h"
 Board::Board(sf::Texture& texture) 
-    : piecesTexture(texture)
+    : piecesTexture(texture), turn(true)
 {
-    turn = 1;
+
 }
 
 void Board::RenderBoard(sf::RenderWindow &window, float squareSize)
@@ -98,12 +98,6 @@ void Board::RenderPieces(sf::RenderWindow &window, sf::Sprite* pieceSprites, flo
             }
         }
     }
-}
-
-void printBinary(char c) {
-    // Use std::bitset to convert char to binary string
-    std::bitset<8> binary(c);
-    std::cout << binary << std::endl;
 }
 
 int Board::CheckMove(int startX, int startY, int endX, int endY)
@@ -220,7 +214,7 @@ void Board::MakeMove(int startX, int startY, int endX, int endY, float squareSiz
 {
     /* After a move is made, any opportunity to en passant is lost. Maybe there is a way of doing this with less overhead,
     especially considering how rarely it will matter.*/
-    turn = (board[startX][startY] & WHITEPIECE);
+    turn = !(board[startX][startY] & WHITEPIECE);
     if((board[startX][startY] & 7) == KING || (board[startX][startY] & 7) == ROOK) board[startX][startY] |= MOVED;  
     for(int i = 0; i < 8; i++)
     {
@@ -236,10 +230,7 @@ void Board::MakeMove(int startX, int startY, int endX, int endY, float squareSiz
 
 void Board::MakeMove(int startX, int startY, int endX, int endY, float squareSize, sf::Sprite &pieceSprite)
 {
-    std::cout << turn;
     turn = !(board[startX][startY] & WHITEPIECE);
-    std::cout << turn;
-    fflush(stdout);
     if((board[startX][startY] & 7) == KING || (board[startX][startY] & 7) == ROOK) board[startX][startY] |= MOVED;  
     for(int i = 0; i < 8; i++)
     {
