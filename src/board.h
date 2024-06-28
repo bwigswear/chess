@@ -17,6 +17,7 @@
 
 class Board{
 private:
+    bool turn;
     char board[8][8];
     sf::Texture& piecesTexture;
 public:

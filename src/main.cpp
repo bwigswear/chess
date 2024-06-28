@@ -4,7 +4,7 @@
 
 int main(){
 
-    sf::RenderWindow window(sf::VideoMode(1200, 1200), "Chessboard");
+    sf::RenderWindow window(sf::VideoMode(800, 800), "Chessboard");
 
     sf::Texture example;
     example.loadFromFile("images/pieces.png");
@@ -52,7 +52,6 @@ int main(){
                             startY = piecePosition.y / squareSize;
                             movingX = mousePosition.x - piecePosition.x;
                             movingY = mousePosition.y - piecePosition.y;
-                            fflush(stdout);
                             break;
                         }
                     }
@@ -65,7 +64,33 @@ int main(){
                 {
                     piecePosition = spritePieces[clickedPiece].getPosition();
                     switch(blah.CheckMove(startX, startY, (piecePosition.x + movingX) / squareSize, (piecePosition.y + movingY) / squareSize)){
+                        case 4:
+                            //En Passant
+                            for(int i = 0; i < 32; i++)
+                            {
+                                if(spritePieces[i].getGlobalBounds().contains(piecePosition.x + movingX, startY * squareSize))
+                                {
+                                    blah.MakeMove(startX, startY, (piecePosition.x + movingX) / squareSize, startY, squareSize, spritePieces[clickedPiece], spritePieces[i]);
+                                    break;
+                                }
+                            }
+                            blah.MakeMove((piecePosition.x + movingX) / squareSize, startY, (piecePosition.x + movingX) / squareSize, (piecePosition.y + movingY) / squareSize, squareSize, spritePieces[clickedPiece]);
+                            break;
+                        case 3:
+                            //Castle
+                            if(startY == 0)
+                            {
+                                blah.MakeMove(4, 0, 6, 0, squareSize, spritePieces[4]);
+                                blah.MakeMove(7, 0, 5, 0, squareSize, spritePieces[7]);
+                            }
+                            else
+                            {
+                                blah.MakeMove(4, 7, 6, 7, squareSize, spritePieces[28]);
+                                blah.MakeMove(7, 7, 5, 7, squareSize, spritePieces[31]);
+                            }
+                            break;
                         case 2:
+                            //Capture a Piece
                             for(int i = 0; i < 32; i++)
                             {
                                 if(i == clickedPiece) continue;
@@ -77,9 +102,11 @@ int main(){
                             }
                             break;
                         case 1:
+                            //Move Without Capturing
                             blah.MakeMove(startX, startY, (piecePosition.x + movingX) / squareSize, (piecePosition.y + movingY) / squareSize, squareSize, spritePieces[clickedPiece]);
                             break;
                         case 0:
+                            //Illegal Move
                             spritePieces[clickedPiece].setPosition(squareSize * startX, squareSize * startY);
                     }
                     moving = false;
