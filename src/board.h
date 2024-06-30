@@ -20,11 +20,16 @@ private:
     char board[8][8];
     sf::Texture& piecesTexture;
 public:
+    sf::Vector2i blackKing, whiteKing;
     Board(sf::Texture&);
     void ResetBoard();
     void RenderBoard(sf::RenderWindow&, float squareSize);
     void RenderPieces(sf::RenderWindow &window, sf::Sprite* pieceSprites, float squareSize);
-    int CheckMove(int startX, int startY, int endX, int endY);
+    int CheckMove(int startX, int startY, int endX, int endY, bool checkTurn);
     void MakeMove(int startX, int startY, int endX, int endY, float squareSize, sf::Sprite &pieceSprite, sf::Sprite &captureSprite);
     void MakeMove(int startX, int startY, int endX, int endY, float squareSize, sf::Sprite &pieceSprite);
+    bool MateCheck(char color);
+    sf::Vector2i CheckAllChecks(char color);
+    int CheckCheck(int x, int y, char color);
+    bool CheckMateCheck(char color, sf::Vector2i& checker);
 };
