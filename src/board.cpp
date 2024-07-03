@@ -100,12 +100,20 @@ void Board::RenderPieces(sf::RenderWindow &window, sf::Sprite* pieceSprites, flo
     }
 }
 
+/* This function is the primary logic behind piece movement. Given a starting square and ending square, determine if
+the move can be made. The checkTurn parameter is used by calling functions to signify if the turn designation is to be
+used when checking a move's validity. Return values are 0 - invalid, 1 - valid + no capture, 2 - valid + capture,
+3 - castle, 4 - en passant*/
+
 int Board::CheckMove(int startX, int startY, int endX, int endY, bool checkTurn)
 {
+    //Check for basic invalid moves
     if(checkTurn) if((turn && (board[startX][startY] & BLACKPIECE)) || (!turn && (board[startX][startY] & WHITEPIECE))) return 0;
     if(endX < 0 || endX > 7 || endY < 0 || endY > 7) return 0;
     if(startX == endX && startY == endY) return 0;
     if((board[startX][startY] & board[endX][endY]) & 48) return 0;
+
+
     int xStep, yStep;
     switch (board[startX][startY] & 7){
         case PAWN:
@@ -197,6 +205,7 @@ int Board::CheckMove(int startX, int startY, int endX, int endY, bool checkTurn)
             return 0;
             break;
         case KING:
+            // Need some type of board testing to see if the move will put King in check
             if(startX == 4 && startY == 7 && endX == 6 && endY == 7 && !(board[startX][startY] & MOVED) && (board[7][7] & ROOK) && !(board[7][7] & MOVED) 
             && !(board[5][7] & 7) && !(board[6][7] & 7)) return 3;
             if(startX == 4 && startY == 0 && endX == 6 && endY == 0 && !(board[startX][startY] & MOVED) && (board[7][0] & ROOK) && !(board[7][0] & MOVED)
@@ -210,26 +219,40 @@ int Board::CheckMove(int startX, int startY, int endX, int endY, bool checkTurn)
     return 0;
 }
 
+//This function is called when a piece is moved to capture another
 void Board::MakeMove(int startX, int startY, int endX, int endY, float squareSize, sf::Sprite &pieceSprite, sf::Sprite &captureSprite)
 {
-    /* After a move is made, any opportunity to en passant is lost. Maybe there is a way of doing this with less overhead,
-    especially considering how rarely it will matter.*/
+    //Change current global board state
     turn = !(board[startX][startY] & WHITEPIECE);
+
+    //Any king or rook movement prevents future castling
     if((board[startX][startY] & 7) == KING || (board[startX][startY] & 7) == ROOK) board[startX][startY] |= MOVED;  
+    
+    /* After a move is made, opportunity to move on a piece that was available for en passant capture is no longer available.
+    This could likely be optimized, especially considering how rarely it comes into play. */
     for(int i = 0; i < 8; i++)
     {
         if((board[i][3] & 7) == PAWN) board[i][3] &= 247;
         if((board[i][4] & 7) == PAWN) board[i][4] &= 247;
     }
+
+    //Transference of board square states
     board[endX][endY] &= 192; board[endX][endY] |= (board[startX][startY] & 63);
     board[startX][startY] &= 192;
+
+    //Repositioning of piece sprites
     captureSprite.setPosition(-1 * squareSize, -1 * squareSize);
     pieceSprite.setPosition(endX * squareSize, endY * squareSize);
+
+    //Updating of king global positions for board state calculations
     if((board[endX][endY] & (KING | WHITEPIECE)) == (KING | WHITEPIECE)) whiteKing.x = endX, whiteKing.y = endY;
     if((board[endX][endY] & (KING | BLACKPIECE)) == (KING | BLACKPIECE)) blackKing.x = endX, blackKing.y = endY;
+
     return;
 }
 
+
+//This version of make move is called when a piece capture is not necessary.
 void Board::MakeMove(int startX, int startY, int endX, int endY, float squareSize, sf::Sprite &pieceSprite)
 {
     turn = !(board[startX][startY] & WHITEPIECE);
@@ -317,12 +340,32 @@ int Board::CheckCheck(int x, int y, char color)
 bool Board::CheckMateCheck(char color, sf::Vector2i& checker)
 {
 
-    if(checker.x == -1) return false;
-    if(checker.x == -2) return MateCheck(color);
+    //This function shouldn't be called in this case, but just to be sure
+    if(checker.x == -1 || checker.y == -1) return false;
 
-    //If there is one piece responsible for checking, check to see if that piece can be captured or blocked
+    //Before anything else, check to see if the king can move
+    if(MateCheck(color)) return false;
 
+    //If king is mated and 2 pieces are placing it in check, king is checkmated
+    if(checker.x == -2) return true;
 
+    //If there is one piece responsible for checking, check to see if that piece can be captured
+    for(int i = 0; i < 64; i++) if((board[i % 8][i / 8] & color) && CheckMove(i % 8, i / 8, checker.x, checker.y, false)) return false;
 
+    //At this point, if a knight or pawn is responsible for the check, checkmate will be the same as mate according to my function checking
+    if((board[checker.x][checker.y] & KNIGHT) & PAWN) return true;
+
+    /* At this point, only pieces that can be responsible for the check are bishop, queen, or rook. The path between this piece and the opposing king
+    will be checked for potential check blocking. */
+    int xStep = checker.x - color == WHITEPIECE ? whiteKing.x : blackKing.x;
+    int yStep = checker.y - color == BLACKPIECE ? blackKing.y : blackKing.y;
+
+    for(int x = checker.x + xStep, y = checker.y + yStep; x != color == WHITEPIECE ? whiteKing.x : blackKing.x && y != color == BLACKPIECE ? blackKing.y : blackKing.y;
+        x+=xStep, y+=yStep) 
+    {
+        for(int i = 0; i < 64; i++) if((board[i % 8][i / 8] & color) && CheckMove(i % 8, i / 8, x, y, false)) return false;
+    }
+
+    //Checker can not be blocked or captured
     return true;
 }
