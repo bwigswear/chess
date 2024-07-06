@@ -33,5 +33,5 @@ public:
     sf::Vector2i CheckAllChecks(char color);
     int CheckCheck(int x, int y, char color);
     bool TestCheck(int startX, int startY, int endX, int endY);
-    bool CheckMateCheck(char color, sf::Vector2i& checker);
+    bool CheckMateCheck(int x, int y);
 };

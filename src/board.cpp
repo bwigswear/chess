@@ -1,6 +1,6 @@
 #include "board.h"
 Board::Board(sf::Texture& texture) 
-    : piecesTexture(texture), turn(true), blackKing(4, 0), whiteKing(4, 7)
+    : piecesTexture(texture), turn(true)
 {
 
 }
@@ -47,6 +47,8 @@ void Board::ResetBoard()
         board[i][1] |= (PAWN | BLACKPIECE); // Set the second row with pawns
         board[i][6] |= (PAWN | WHITEPIECE); // Set the seventh row with pawns
     }
+    turn = true;
+    blackKing = {4, 0}; whiteKing = {4, 7};
 }
 
 void Board::RenderPieces(sf::RenderWindow &window, sf::Sprite* pieceSprites, float squareSize)
@@ -267,6 +269,9 @@ void Board::MakeMove(int startX, int startY, int endX, int endY, float squareSiz
     board[startX][startY] &= 192;
     pieceSprite.setPosition(endX * squareSize, endY * squareSize);
     if((board[endX][endY] & PAWN) && abs(startY - endY) == 2) board[endX][endY] |= 8;
+    if((board[endX][endY] & (KING | WHITEPIECE)) == (KING | WHITEPIECE)) whiteKing.x = endX, whiteKing.y = endY;
+    if((board[endX][endY] & (KING | BLACKPIECE)) == (KING | BLACKPIECE)) blackKing.x = endX, blackKing.y = endY;
+
     return;
 }
 
@@ -287,20 +292,22 @@ bool Board::MateCheck(char color)
     if(kingPos.y + 1 < 8 && !(board[kingPos.x][kingPos.y + 1] & 7)) positions.push_back(kingPos + sf::Vector2i(0, 1));
     if(kingPos.x - 1 > -1 && kingPos.y + 1 < 8 && !(board[kingPos.x - 1][kingPos.y + 1] & color)) positions.push_back(kingPos + sf::Vector2i(-1, 1));
     if(kingPos.x - 1 > -1 && !(board[kingPos.x - 1][kingPos.y] & 7)) positions.push_back(kingPos + sf::Vector2i(-1, 0));
-    
+
     //If all squares surrounding the king are occupied return true.
     if(positions.size() == 0) return true;
 
     //Check each open position around the king to see if the king will be in check after moving there
     for(sf::Vector2i position : positions)
     {
-        bool capable = true;
+        if (!TestCheck(kingPos.x, kingPos.y, position.x, position.y)) return false;
+        /*bool capable = true;
         for(int i = 0; i < 64; i++)
         {
             if((board[i % 8][i / 8] & 7) && !(board[i % 8][i / 8] & color) && CheckMove(i % 8, i / 8, position.x, position.y, false)) {capable = false; break;}
         }
-        if(capable) return false;
+        if(capable) return false;*/
     }
+
     return true;
 }
 
@@ -329,7 +336,7 @@ sf::Vector2i Board::CheckAllChecks(char color)
     return checker;
 }
 
-/* TestCheck is called to see if a move will end in a board state in which the moving coloris in check. This is both to check if the player
+/* TestCheck is called to see if a move will end in a board state in which the moving color is in check. This is both to check if the player
 is positioning their own king in check and to force the player to escape an already existing check. The function should never be called while
 the player is checkmated so there is no need to account for it. */
 bool Board::TestCheck(int startX, int startY, int endX, int endY)
@@ -356,7 +363,6 @@ bool Board::TestCheck(int startX, int startY, int endX, int endY)
     board[startX][startY] &= 192;
 
     bool ret = CheckAllChecks(board[endX][endY] & 48).x != -1;
-
     board[startX][startY] |= (board[endX][endY] & 63);
     board[endX][endY] = saveSquare;
 
@@ -382,15 +388,17 @@ int Board::CheckCheck(int x, int y, char color)
     return CheckMove(x, y, color == BLACKPIECE ? blackKing.x : whiteKing.x, color == BLACKPIECE ? blackKing.y : whiteKing.y, false);
 }
 
-//CheckMateCheck function checks to see if a specific color is in checkmate and should only be called after that color's king has been placed in check.
-bool Board::CheckMateCheck(char color, sf::Vector2i& checker)
+//CheckMateCheck function checks to see if a specific color is in checkmate and will be called after every completed move
+bool Board::CheckMateCheck(int x, int y)
 {
+    char color = (board[x][y] & 48) == BLACKPIECE ? WHITEPIECE : BLACKPIECE;
+    sf::Vector2i checker = CheckAllChecks(color);
 
     //This function shouldn't be called in this case, but just to be sure
     if(checker.x == -1 || checker.y == -1) return false;
 
     //Before anything else, check to see if the king can move
-    if(MateCheck(color)) return false;
+    if(!MateCheck(color)) return false;
 
     //If king is mated and 2 pieces are placing it in check, king is checkmated
     if(checker.x == -2) return true;
@@ -399,14 +407,16 @@ bool Board::CheckMateCheck(char color, sf::Vector2i& checker)
     for(int i = 0; i < 64; i++) if((board[i % 8][i / 8] & color) && CheckMove(i % 8, i / 8, checker.x, checker.y, false)) return false;
 
     //At this point, if a knight or pawn is responsible for the check, checkmate will be the same as mate according to my function checking
-    if((board[checker.x][checker.y] & KNIGHT) & PAWN) return true;
+    if((board[checker.x][checker.y] & 7) == KNIGHT || (board[checker.x][checker.y] & 7) == PAWN) return true;
 
     /* At this point, only pieces that can be responsible for the check are bishop, queen, or rook. The path between this piece and the opposing king
     will be checked for potential check blocking. */
-    int xStep = checker.x - color == WHITEPIECE ? whiteKing.x : blackKing.x;
-    int yStep = checker.y - color == BLACKPIECE ? blackKing.y : blackKing.y;
+    int xStep = (color == WHITEPIECE ? whiteKing.x : blackKing.x) - checker.x;
+    int yStep = (color == WHITEPIECE ? whiteKing.y : blackKing.y) - checker.y;
+    xStep = xStep != 0 ? xStep / abs(xStep) : 0;
+    yStep = yStep != 0 ? yStep / abs(yStep) : 0;
 
-    for(int x = checker.x + xStep, y = checker.y + yStep; x != color == WHITEPIECE ? whiteKing.x : blackKing.x && y != color == BLACKPIECE ? blackKing.y : blackKing.y;
+    for(int x = checker.x + xStep, y = checker.y + yStep; x != (color == WHITEPIECE ? whiteKing.x : blackKing.x) && y != (color == BLACKPIECE ? blackKing.y : blackKing.y);
         x+=xStep, y+=yStep) 
     {
         for(int i = 0; i < 64; i++) if((board[i % 8][i / 8] & color) && CheckMove(i % 8, i / 8, x, y, false)) return false;

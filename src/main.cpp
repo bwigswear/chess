@@ -15,7 +15,7 @@ int main(){
 
     bool moving = false;
     int clickedPiece = -1;
-    int startX, startY;
+    int startX, startY, endX, endY;
     float movingX, movingY;
     sf::Vector2f mousePosition, piecePosition;
     float squareSize = static_cast<float>(window.getSize().x) / 8;
@@ -55,6 +55,7 @@ int main(){
                             break;
                         }
                     }
+                    continue;
                 }
             }
 
@@ -62,20 +63,22 @@ int main(){
             {
                 if (event.mouseButton.button == sf::Mouse::Left) 
                 {
+                    if(clickedPiece == -1) continue;
                     piecePosition = spritePieces[clickedPiece].getPosition();
-                    std::cout << "here" << std::endl;
-                    switch(blah.CheckMove(startX, startY, (piecePosition.x + movingX) / squareSize, (piecePosition.y + movingY) / squareSize, true)){
+                    endX = (piecePosition.x + movingX) / squareSize;
+                    endY = (piecePosition.y + movingY) / squareSize;
+                    switch(blah.CheckMove(startX, startY, endX, endY, true)){
                         case 4:
                             //En Passant
                             for(int i = 0; i < 32; i++)
                             {
                                 if(spritePieces[i].getGlobalBounds().contains(piecePosition.x + movingX, startY * squareSize))
                                 {
-                                    blah.MakeMove(startX, startY, (piecePosition.x + movingX) / squareSize, startY, squareSize, spritePieces[clickedPiece], spritePieces[i]);
+                                    blah.MakeMove(startX, startY, endX, startY, squareSize, spritePieces[clickedPiece], spritePieces[i]);
                                     break;
                                 }
                             }
-                            blah.MakeMove((piecePosition.x + movingX) / squareSize, startY, (piecePosition.x + movingX) / squareSize, (piecePosition.y + movingY) / squareSize, squareSize, spritePieces[clickedPiece]);
+                            blah.MakeMove(endX, startY, endX, endY, squareSize, spritePieces[clickedPiece]);
                             break;
                         case 3:
                             //Castle
@@ -97,18 +100,23 @@ int main(){
                                 if(i == clickedPiece) continue;
                                 if(spritePieces[i].getGlobalBounds().contains(piecePosition.x + movingX, piecePosition.y + movingY))
                                 {
-                                    blah.MakeMove(startX, startY, (piecePosition.x + movingX) / squareSize, (piecePosition.y + movingY) / squareSize, squareSize, spritePieces[clickedPiece], spritePieces[i]);
+                                    blah.MakeMove(startX, startY, endX, endY, squareSize, spritePieces[clickedPiece], spritePieces[i]);
                                     break;
                                 }
                             }
                             break;
                         case 1:
                             //Move Without Capturing
-                            blah.MakeMove(startX, startY, (piecePosition.x + movingX) / squareSize, (piecePosition.y + movingY) / squareSize, squareSize, spritePieces[clickedPiece]);
+                            blah.MakeMove(startX, startY, endX, endY, squareSize, spritePieces[clickedPiece]);
                             break;
                         case 0:
                             //Illegal Move
                             spritePieces[clickedPiece].setPosition(squareSize * startX, squareSize * startY);
+                    }
+                    if(blah.CheckMateCheck(endX, endY))
+                    {
+                        blah.ResetBoard();
+                        blah.RenderPieces(window, spritePieces, squareSize);
                     }
                     moving = false;
                     clickedPiece = -1;
