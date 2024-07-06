@@ -112,8 +112,9 @@ int Board::CheckMove(int startX, int startY, int endX, int endY, bool checkTurn)
     if(endX < 0 || endX > 7 || endY < 0 || endY > 7) return 0;
     if(startX == endX && startY == endY) return 0;
     if((board[startX][startY] & board[endX][endY]) & 48) return 0;
-
-
+    
+    //Check if color will be in check after move is made
+    if(checkTurn && TestCheck(startX, startY, endX, endY)) return 0;
     int xStep, yStep;
     switch (board[startX][startY] & 7){
         case PAWN:
@@ -326,6 +327,51 @@ sf::Vector2i Board::CheckAllChecks(char color)
         }
     }
     return checker;
+}
+
+/* TestCheck is called to see if a move will end in a board state in which the moving coloris in check. This is both to check if the player
+is positioning their own king in check and to force the player to escape an already existing check. The function should never be called while
+the player is checkmated so there is no need to account for it. */
+bool Board::TestCheck(int startX, int startY, int endX, int endY)
+{
+    char saveSquare = board[endX][endY];
+    sf::Vector2i kingPreserve(startX, startY);
+
+    bool isKing = (board[startX][startY] & 7) == KING;
+    bool isWhitePiece = board[startX][startY] & WHITEPIECE;
+
+    if(isKing) 
+    {
+        if(isWhitePiece) 
+        {
+            whiteKing = {endX, endY};
+        }
+        else
+        {
+            blackKing = {endX, endY};
+        }
+    }
+
+    board[endX][endY] &= 192; board[endX][endY] |= (board[startX][startY] & 63);
+    board[startX][startY] &= 192;
+
+    bool ret = CheckAllChecks(board[endX][endY] & 48).x != -1;
+
+    board[startX][startY] |= (board[endX][endY] & 63);
+    board[endX][endY] = saveSquare;
+
+    if(isKing)
+    {
+        if(isWhitePiece)
+        {
+            whiteKing = kingPreserve;
+        }
+        else
+        {
+            blackKing = kingPreserve;
+        }
+    }
+    return ret;
 }
 
 /* CheckCheck function checks to see if a piece at a certain position and of a certain color is responsible for the opposing king being in check.

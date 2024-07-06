@@ -63,6 +63,7 @@ int main(){
                 if (event.mouseButton.button == sf::Mouse::Left) 
                 {
                     piecePosition = spritePieces[clickedPiece].getPosition();
+                    std::cout << "here" << std::endl;
                     switch(blah.CheckMove(startX, startY, (piecePosition.x + movingX) / squareSize, (piecePosition.y + movingY) / squareSize, true)){
                         case 4:
                             //En Passant
@@ -100,12 +101,10 @@ int main(){
                                     break;
                                 }
                             }
-                            std::cout << blah.MateCheck(WHITEPIECE) << std::endl;
                             break;
                         case 1:
                             //Move Without Capturing
                             blah.MakeMove(startX, startY, (piecePosition.x + movingX) / squareSize, (piecePosition.y + movingY) / squareSize, squareSize, spritePieces[clickedPiece]);
-                            std::cout << blah.MateCheck(WHITEPIECE) << std::endl;
                             break;
                         case 0:
                             //Illegal Move
