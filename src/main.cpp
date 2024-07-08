@@ -82,15 +82,29 @@ int main(){
                             break;
                         case 3:
                             //Castle
-                            if(startY == 0)
+                            if(startY == 0 && endX == 6)
                             {
                                 blah.MakeMove(4, 0, 6, 0, squareSize, spritePieces[4]);
                                 blah.MakeMove(7, 0, 5, 0, squareSize, spritePieces[7]);
+                                break;
                             }
-                            else
+                            if(startY == 0 && endX == 2)
+                            {
+                                blah.MakeMove(4, 0, 2, 0, squareSize, spritePieces[4]);
+                                blah.MakeMove(0, 0, 3, 0, squareSize, spritePieces[0]);
+                                break;
+                            }
+                            if(endX == 6)
                             {
                                 blah.MakeMove(4, 7, 6, 7, squareSize, spritePieces[28]);
                                 blah.MakeMove(7, 7, 5, 7, squareSize, spritePieces[31]);
+                                break;
+                            }
+                            if(endX == 2)
+                            {
+                                blah.MakeMove(4, 7, 2, 7, squareSize, spritePieces[28]);
+                                blah.MakeMove(0, 7, 3, 7, squareSize, spritePieces[24]);
+                                break;
                             }
                             break;
                         case 2:
@@ -114,6 +128,11 @@ int main(){
                             spritePieces[clickedPiece].setPosition(squareSize * startX, squareSize * startY);
                     }
                     if(blah.CheckMateCheck(endX, endY))
+                    {
+                        blah.ResetBoard();
+                        blah.RenderPieces(window, spritePieces, squareSize);
+                    }
+                    if(blah.StaleMateCheck(endX, endY))
                     {
                         blah.ResetBoard();
                         blah.RenderPieces(window, spritePieces, squareSize);

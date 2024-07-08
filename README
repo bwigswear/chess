@@ -1,0 +1,13 @@
+Single Player Chess in C++.
+
+GUI made with SFML.
+
+Piece sprite image source and license can be found at https://commons.wikimedia.org/wiki/File:Chess_Pieces_Sprite.svg
+
+Features needing implementation:
+-Check for niche stalemate scenarios involving more than a King left
+-Pawn promotion
+-Checking if a castle will put the player in check
+-GUI features (Pawn promotion, Surrender, Game end screen)
+-Home screen
+-Option to play against chess engine

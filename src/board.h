@@ -13,7 +13,6 @@
 
 #include <SFML/Graphics.hpp>
 #include <iostream>
-#include <bitset>
 
 class Board{
 private:
@@ -34,4 +33,5 @@ public:
     int CheckCheck(int x, int y, char color);
     bool TestCheck(int startX, int startY, int endX, int endY);
     bool CheckMateCheck(int x, int y);
+    bool StaleMateCheck(int x, int y);
 };

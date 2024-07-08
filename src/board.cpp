@@ -211,8 +211,12 @@ int Board::CheckMove(int startX, int startY, int endX, int endY, bool checkTurn)
             // Need some type of board testing to see if the move will put King in check
             if(startX == 4 && startY == 7 && endX == 6 && endY == 7 && !(board[startX][startY] & MOVED) && (board[7][7] & ROOK) && !(board[7][7] & MOVED) 
             && !(board[5][7] & 7) && !(board[6][7] & 7)) return 3;
+            if(startX == 4 && startY == 7 && endX == 2 && endY == 7 && !(board[startX][startY] & MOVED) && (board[0][7] & ROOK) && !(board[0][7] & MOVED) 
+            && !(board[3][7] & 7) && !(board[2][7] & 7)) return 3;
             if(startX == 4 && startY == 0 && endX == 6 && endY == 0 && !(board[startX][startY] & MOVED) && (board[7][0] & ROOK) && !(board[7][0] & MOVED)
             && !(board[5][0] & 7) && !(board[6][0] & 7)) return 3;
+            if(startX == 4 && startY == 0 && endX == 2 && endY == 0 && !(board[startX][startY] & MOVED) && (board[0][0] & ROOK) && !(board[0][0] & MOVED)
+            && !(board[3][0] & 7) && !(board[2][0] & 7)) return 3;
             //Implement check checking here
             if(abs(startX - endX) > 1 || abs(startY - endY) > 1) return 0;
             return board[endX][endY] & 7 ? 2 : 1;
@@ -424,4 +428,21 @@ bool Board::CheckMateCheck(int x, int y)
 
     //Checker can not be blocked or captured
     return true;
+}
+
+/* StaleMateCheck will be called after each move similarly to CheckMateCheck. The function will assume that it is called after CheckMateCheck returns false.
+For the time being, stalemate will be the only method of draw that is checked for. */
+bool Board::StaleMateCheck(int x, int y)
+{
+    char color = (board[x][y] & 48) == BLACKPIECE ? WHITEPIECE : BLACKPIECE;
+    
+    /* For now, I'm only going to check to see if the King is the only piece left. There are many niche cases to check for in which
+    there are no legal moves and there exists more than a King. */
+    for(int i = 0; i < 64; i++){
+        if((board[i / 8][i % 8] & 7) != KING && (board[i / 8][i % 8] & color))
+        {
+            return false;
+        }
+    }
+    return MateCheck(color);
 }
